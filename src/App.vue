@@ -1,21 +1,24 @@
 <script lang="ts">
-  import RightBar from "./components/rightBar.vue"
+  import RightBar from "./components/rightBar.vue";
+  import LeftBar from "./components/leftBar.vue";
+  import { defineComponent } from "vue";
 
-  export default {
+  export default defineComponent({
     name: "App",
     data() {
       return {
         rightToolbar: true
       };
     },
-    components: { RightBar }
-}
+    components: { RightBar, LeftBar }
+});
 </script>
 
 <template>
   <canvas id="objects"></canvas>
   <canvas id="fields"></canvas>
   <RightBar></RightBar>
+  <LeftBar></LeftBar>
 </template>
 
 <style lang="less">

@@ -2,7 +2,7 @@
     <div class="object">
         <div id="brief">
             <button id="detail" @click="triggerDetail()">{{detail ? '简略' : '详细'}}</button>
-            <img id="image" src="src/assets/ball.png"/>
+            <img id="image" :src="'/src/assets/' + _img"/>
             <span class="text">{{_name}}</span>
             <button class="create" @click="create(configs)">创建</button>
         </div>
@@ -20,7 +20,7 @@
 <script lang="ts">
 
 import { addRoundObject } from "../experiment/utils";
-import { Obj, ObjectDict, getName } from '../experiment/utils'
+import { Obj, getName } from '../experiment/utils'
 import objects from '../resource/objects';
 import { defineComponent } from "vue";
 
@@ -53,6 +53,10 @@ export default defineComponent({
         _type: {
             type: String,
             required: true
+        },
+        _img: {
+            type: String,
+            required: true
         }
     },
     data() {
@@ -81,7 +85,6 @@ export default defineComponent({
         },
         create(config: Config) {
             const obj = this.createConfig(config);
-            console.log(obj);
             return addRoundObject(obj);
         },
         triggerDetail() {
@@ -203,6 +206,7 @@ export default defineComponent({
     background-color: #222;
     height: 20px;
     justify-content: space-between;
+    align-self: center;
 }
 
 #unit {

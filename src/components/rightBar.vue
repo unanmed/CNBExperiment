@@ -1,6 +1,6 @@
 <template>
     <div id="right-bar">
-        <ObjectsVue v-for="obj of list" :_name="obj.name" :_type="obj.type"></ObjectsVue>
+        <ObjectsVue v-for="obj of list" :_name="obj.name" :_type="obj.type" :_img="obj.img"></ObjectsVue>
     </div>
 </template>
 
@@ -13,7 +13,7 @@ const list = Object.values(objects);
 
 export default defineComponent({
     name: "RightBar",
-    setup: () => {
+    data: () => {
         return {
             list
         };

@@ -1,5 +1,5 @@
 import { app } from "./main";
-import { Field, getFieldList, RoundObject, UniformElectricField } from "..";
+import { getFieldList, RoundObject, UniformElectricField } from "..";
 import { getObjectList } from "..";
 
 export class Draw {
@@ -100,5 +100,27 @@ export function drawAllFields(): void {
                 fieldsCtx.fill();
             }
         }
+    }
+}
+
+/** 绘制一个电场 */
+export function drawField(field: UniformElectricField): void {
+    const fieldsCtx = Draw.contexts.fields;
+    if (!(fieldsCtx instanceof CanvasRenderingContext2D)) return;
+    if (field.shape.type === 'circle') {
+        const [x, y] = field.shape.center;
+        fieldsCtx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+        fieldsCtx.beginPath();
+        fieldsCtx.arc(x, y, field.shape.radius, 0, Math.PI * 2);
+        fieldsCtx.fill();
+    } else if (field.shape.type === 'polygon') {
+        fieldsCtx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+        fieldsCtx.beginPath();
+        fieldsCtx.moveTo(field.shape.node[0][0], field.shape.node[0][1]);
+        for (const [x, y] of field.shape.node) {
+            fieldsCtx.lineTo(x, y);
+        }
+        fieldsCtx.closePath();
+        fieldsCtx.fill();
     }
 }
