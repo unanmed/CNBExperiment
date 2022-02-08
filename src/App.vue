@@ -1,10 +1,21 @@
-<script setup lang="ts">
+<script lang="ts">
+  import RightBar from "./components/rightBar.vue"
 
+  export default {
+    name: "App",
+    data() {
+      return {
+        rightToolbar: true
+      };
+    },
+    components: { RightBar }
+}
 </script>
 
 <template>
   <canvas id="objects"></canvas>
   <canvas id="fields"></canvas>
+  <RightBar></RightBar>
 </template>
 
 <style lang="less">

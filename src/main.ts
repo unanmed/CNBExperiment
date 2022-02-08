@@ -4,4 +4,4 @@ import './experiment/main'
 
 createApp(App).mount('#app');
 
-import('./experiment/draw');
+import('./experiment/draw').then(data => new data.Draw());
