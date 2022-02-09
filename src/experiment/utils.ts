@@ -1,5 +1,5 @@
 import { RoundObject, Shape, UniformElectricField } from "..";
-import { drawAllFields } from "./draw";
+import { drawAllFields, drawAllObjects } from "./draw";
 
 export interface ObjectDict {
     ball: RoundObject
@@ -15,6 +15,7 @@ export interface Obj<K extends keyof ObjectDict> {
 /** 添加一个圆形物体 */
 export function addRoundObject(config: Obj<'ball'>): RoundObject {
     const obj = new RoundObject('ball', config.config);
+    drawAllObjects();
     return obj;
 }
 

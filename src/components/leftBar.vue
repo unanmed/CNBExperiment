@@ -2,8 +2,8 @@
     <div id="left-bar" style="z-index: 200;">
         <img @click="triggerFold()" id="settings" class="settings" src="/src/assets/settings.png" style="width: 48px; height: 48px;">
         <span id="hr"></span>
-        <img v-if="app.status === 'paused'" @click="triggerPlaying()" class="settings" id="play" src="/src/assets/play.png" style="width: 40px; margin-right: 6px;">
-        <img v-else @click="triggerPlaying()" class="settings" id="pause" src="/src/assets/pause.png" style="width: 40px; margin-right: 6px;">
+        <img v-if="status === 'paused'" @click="triggerPlaying()" class="settings" id="play" src="/src/assets/play.png" style="width: 40px; margin-right: 6px;">
+        <img v-if="status === 'running'" @click="triggerPlaying()" class="settings" id="pause" src="/src/assets/pause.png" style="width: 40px; margin-right: 6px;">
         <img class="settings" @click="changeSpeed('down')" id="speeddown" src="/src/assets/speeddown.png" style="width: 40px; margin-right: 6px;">
         <input type="range" max="10" min="0.1" step="0.1" v-model="app.speed" >
         <img class="settings" @click="changeSpeed('up')" id="speedup" src="/src/assets/speedup.png" style="width: 40px; margin-right: 6px;">
@@ -14,7 +14,7 @@
 
 <script lang="ts">
 
-import { defineComponent } from "vue"
+import { defineComponent } from "vue";
 import { app } from "../experiment/main";
 
 export default defineComponent({
@@ -22,12 +22,14 @@ export default defineComponent({
     data: () => ({
         app,
         folded: false,
+        status: 'running'
     }),
     methods: {
         triggerPlaying() {
-            const status = app.status;
+            const status = this.app.status;            
             if (status === 'running') app.pause();
             else if (status === 'paused') app.resume();
+            this.status = this.app.status;
         },
         triggerFold() {
             const settings = document.getElementById('settings') as HTMLImageElement;
@@ -115,9 +117,10 @@ input[type=range]::-webkit-slider-thumb {
     appearance: none;
     width: 8px;
     height: 20px;
-    background: #555;
+    background: rgb(165, 165, 165);
     border-radius: 5px;
     cursor: pointer;
+    box-shadow: 0px 0px 2px #222, 1px 1px 2px rgb(0, 0, 0);
 }
 
 </style>

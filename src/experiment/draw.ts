@@ -27,7 +27,7 @@ export class Draw {
 
     initDraw() {
         // 注入绘制函数
-        app.addLoop(this.drawAllObjects);
+        app.addLoop(drawAllObjects);
 
         // 初始化resize事件
         this.resize();
@@ -49,26 +49,26 @@ export class Draw {
         Draw.div.style.width = `${window.innerWidth}px`;
         Draw.div.style.height = `${window.innerHeight}px`;
     }
+}
 
-    /** 每帧绘制所有的物体 */
-    drawAllObjects(): void {
-        const objectsCtx = Draw.contexts.objects;
-        if (!(objectsCtx instanceof CanvasRenderingContext2D)) return;
-        const arr = Object.values(Draw.objectList);
-        objectsCtx.clearRect(0, 0, parseFloat(Draw.canvases.objects.style.width || '0'),
-            parseFloat(Draw.canvases.objects.style.height || '0'))
-        for (const obj of arr) {
-            if (obj instanceof RoundObject) {
-                // 绘制圆形物体
-                const [x, y] = obj.position;
-                const gra = objectsCtx.createRadialGradient(x, y, 0, x, y, obj.radius);
-                gra.addColorStop(0, 'white');
-                gra.addColorStop(1, 'green');
-                objectsCtx.fillStyle = gra;
-                objectsCtx.beginPath();
-                objectsCtx.arc(obj.position[0], obj.position[1], obj.radius, 0, Math.PI * 2);
-                objectsCtx.fill();
-            }
+/** 每帧绘制所有的物体 */
+export function drawAllObjects(): void {
+    const objectsCtx = Draw.contexts.objects;
+    if (!(objectsCtx instanceof CanvasRenderingContext2D)) return;
+    const arr = Object.values(Draw.objectList);
+    objectsCtx.clearRect(0, 0, parseFloat(Draw.canvases.objects.style.width || '0'),
+        parseFloat(Draw.canvases.objects.style.height || '0'))
+    for (const obj of arr) {
+        if (obj instanceof RoundObject) {
+            // 绘制圆形物体
+            const [x, y] = obj.position;
+            const gra = objectsCtx.createRadialGradient(x, y, 0, x, y, obj.radius);
+            gra.addColorStop(0, 'white');
+            gra.addColorStop(1, 'green');
+            objectsCtx.fillStyle = gra;
+            objectsCtx.beginPath();
+            objectsCtx.arc(obj.position[0], obj.position[1], obj.radius, 0, Math.PI * 2);
+            objectsCtx.fill();
         }
     }
 }

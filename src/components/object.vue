@@ -2,7 +2,7 @@
     <div class="object">
         <div id="brief">
             <button id="detail" @click="triggerDetail()">{{detail ? '简略' : '详细'}}</button>
-            <img id="image" :src="'/src/assets/' + _img"/>
+            <img id="image" :src="`/source/${_img}`"/>
             <span class="text">{{_name}}</span>
             <button class="create" @click="create(configs)">创建</button>
         </div>
