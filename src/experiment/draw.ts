@@ -117,50 +117,66 @@ function drawFieldBack<K extends keyof FieldList>(field: ScopedField<K>) {
 /** 生成电场的箭头起始和结尾坐标 */
 function getElectricArrowPoints(field: UniformElectricField): Array<Arrow> {
     // 由电场的强弱获取箭头的密度
-    const density = Math.ceil(Math.log10(field.magnitude[0] ** 2 + field.magnitude[1] ** 2)) * 2;
+    let density = Math.ceil(Math.log10(field.magnitude[0] ** 2 + field.magnitude[1] ** 2)) * 2;
     const res: Array<Arrow> = [];
+    let horizonDensity;
+    let radius;
+    let left;
+    let right;
+    let top;
+    let bottom;
+    let node;
+    let arr;
+    let horizon;
+    let vertical;
     // 分情况，圆形还是多边形
     if (field.shape.type === 'circle') {
+        radius = field.shape.radius;
+        left = field.shape.center[0] - radius;
+        right = field.shape.center[0] + radius;
+        top = field.shape.center[1] - radius;
+        bottom = field.shape.center[1] + radius;
         // 圆形
-        const radius = field.shape.radius;
-        const left = field.shape.center[0] - radius;
-        const right = field.shape.center[0] + radius;
-        const top = field.shape.center[1] - radius;
-        const bottom = field.shape.center[1] + radius;
-        // 生成箭头的起始和结束点
-        for (let i = 0; i <= density; i++) {
-            const [x1, y1] = [left, top + radius * 2 / density * i];
-            const [x2, y2] = [right, y1 + radius * 2 * field.magnitude[1] / field.magnitude[0]];
-            const [x3, y3] = [left + radius * 2 / density * i, top];
-            const [x4, y4] = [x3 + radius * 2 * field.magnitude[0] / field.magnitude[1], bottom];
-            res.push({ x1, x2, y1, y2 });
-            res.push({ x1: x3, x2: x4, y1: y3, y2: y4 });
+        if (field.magnitude[1] > field.magnitude[0]) {
+            horizonDensity = density;
+            density = (right - left) / (bottom - top) * density
+                * field.magnitude[0] / field.magnitude[1];
+        } else {
+            horizonDensity = (right - left) / (bottom - top) * density
+                * field.magnitude[1] / field.magnitude[0];
         }
-    } else if (field.shape.type === 'polygon') {
+    } else {
         // 多边形
-        const node = field.shape.node;
-        const arr = node.slice();
-        const horizon = arr.map(item => item[0]);
-        const vertical = arr.map(item => item[1]);
-        const left = Math.min(...horizon);
-        const right = Math.max(...horizon);
-        const top = Math.min(...vertical);
-        const bottom = Math.max(...vertical);
-        // 生成箭头的起始和结束点
-        if (field.magnitude[0] !== 0) {
-            for (let i = 0; i <= density; i++) {
-                const [x1, y1] = [left, top + (bottom - top) * i / density];
-                const [x2, y2] = [right, y1 + (right - left) * field.magnitude[1] / field.magnitude[0]];
-                res.push({ x1, x2, y1, y2 });
-            }
+        node = field.shape.node;
+        arr = node.slice();
+        horizon = arr.map(item => item[0]);
+        vertical = arr.map(item => item[1]);
+        left = Math.min(...horizon);
+        right = Math.max(...horizon);
+        top = Math.min(...vertical);
+        bottom = Math.max(...vertical);
+        if (field.magnitude[1] > field.magnitude[0]) {
+            horizonDensity = density;
+            density = (right - left) / (bottom - top) * density
+                * field.magnitude[0] / field.magnitude[1];
+        } else {
+            horizonDensity = (right - left) / (bottom - top) * density
+                * field.magnitude[1] / field.magnitude[0];
         }
-        if (field.magnitude[1] !== 0) {
-            const horizonDensity = (right - left) / (bottom - top) * density;
-            for (let i = 0; i <= horizonDensity; i++) {
-                const [x3, y3] = [left + (right - left) * i / horizonDensity, top];
-                const [x4, y4] = [x3 + (bottom - top) * field.magnitude[0] / field.magnitude[1], bottom];
-                res.push({ x1: x3, x2: x4, y1: y3, y2: y4 });
-            }
+    }
+    // 生成箭头的起始和结束点
+    if (field.magnitude[0] !== 0) {
+        for (let i = 0; i <= density; i++) {
+            const [x1, y1] = [left, top + (bottom - top) * i / density];
+            const [x2, y2] = [right, y1 + (right - left) * field.magnitude[1] / field.magnitude[0]];
+            res.push({ x1, x2, y1, y2 });
+        }
+    }
+    if (field.magnitude[1] !== 0) {
+        for (let i = 0; i <= horizonDensity; i++) {
+            const [x3, y3] = [left + (right - left) * i / horizonDensity, top];
+            const [x4, y4] = [x3 + (bottom - top) * field.magnitude[0] / field.magnitude[1], bottom];
+            res.push({ x1: x3, x2: x4, y1: y3, y2: y4 });
         }
     }
     return res;
@@ -239,7 +255,7 @@ function intersectCircle(center: [number, number], radius: number, arrow: Arrow)
     const _x2 = (-b - sqrtDelta) / (2 * a);
     const _y1 = k * _x1 + m;
     const _y2 = k * _x2 + m;
-    return { x1: _x1, x2: _x2, y1: _y1, y2: _y2 };
+    return { x1: _x2, x2: _x1, y1: _y2, y2: _y1 };
 }
 
 /** 绘制电场的箭头 */
@@ -249,7 +265,7 @@ function drawElectricArrow(field: UniformElectricField) {
     const arr = getElectricArrowPoints(field);
     let info;
     if (!fieldCache[field.id]) {
-        const cache: Array<Arrow> = [];
+        let cache: Array<Arrow> = [];
         // 判断与边界的交点，仍然将圆形与多边形分开
         if (field.shape.type === 'circle') {
             for (const { x1, x2, y1, y2 } of arr) {
@@ -260,6 +276,13 @@ function drawElectricArrow(field: UniformElectricField) {
             for (const { x1, x2, y1, y2 } of arr) {
                 info = intersectPolygon(field.shape.node, { x1, x2, y1, y2 });
                 if (info.length) cache.push(...info);
+            }
+        }
+        // 去重
+        for (let i = 0; i < cache.length; i++) {
+            if (cache.some((vv, ii) => ii !== i && JSON.stringify(vv) === JSON.stringify(cache[i]))) {
+                cache.splice(i, 1);
+                i--;
             }
         }
         fieldCache[field.id] = info = cache;
@@ -274,18 +297,17 @@ function drawElectricArrow(field: UniformElectricField) {
         fieldsCtx.moveTo(x1, y1);
         fieldsCtx.lineTo(x2, y2);
         // 绘制箭头的头部
-        // const sqrt2 = Math.SQRT1_2;
-        // const [x0, y0] = [(x2 - x1) * sqrt2, (y2 - y1) * sqrt2];
-        // const [x3, y3] = [x2 - (x0 + y0) / 20, y2 + (y0 - x0) / 20];
-        // const [x4, y4] = [x2 - (x0 + y0) / 20, y2 + (x0 + y0) / 20];
-        // fieldsCtx.moveTo(x2, y2);
-        // fieldsCtx.lineTo(x3, y3);
-        // fieldsCtx.lineTo(x4, y4);
+        const sqrt2 = Math.SQRT1_2;
+        const [x0, y0] = [(x2 - x1) * sqrt2, (y2 - y1) * sqrt2];
+        const [x3, y3] = [x2 - (x0 - y0) * sqrt2 / 15, y2 - (x0 + y0) * sqrt2 / 15];
+        const [x4, y4] = [x2 - (x0 + y0) * sqrt2 / 15, y2 + (x0 - y0) * sqrt2 / 15];
+        fieldsCtx.moveTo(x2, y2);
+        fieldsCtx.lineTo(x3, y3);
+        fieldsCtx.moveTo(x2, y2);
+        fieldsCtx.lineTo(x4, y4);
     }
     fieldsCtx.closePath();
     fieldsCtx.stroke();
-    console.log(info);
-
 }
 
 /** 绘制一个匀强电场|磁场 */
