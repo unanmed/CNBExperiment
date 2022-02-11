@@ -31,6 +31,7 @@ interface Config {
     vy: string;
     radius: string;
     mass: string;
+    charge: string;
     [key: string]: string;
 }
 
@@ -40,7 +41,8 @@ const config: Config = {
     vx: '0',
     vy: '0',
     mass: '1',
-    radius: '50'
+    radius: '50',
+    charge: '0'
 }
 
 export default defineComponent({
@@ -143,7 +145,7 @@ export default defineComponent({
     border-radius: 4px;
     color: white;
     width: 20%;
-    font-size: 1em;
+    font-size: 16px;
 }
 
 .create:hover {

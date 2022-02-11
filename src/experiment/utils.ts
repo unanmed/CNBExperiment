@@ -12,6 +12,8 @@ export interface Obj<K extends keyof ObjectDict> {
     config: ObjectDict[K];
 }
 
+export const shapeList: Shape[] = [new Shape('circle', [100, 100], 100)];
+
 /** 添加一个圆形物体 */
 export function addRoundObject(config: Obj<'ball'>): RoundObject {
     const obj = new RoundObject('ball', config.config);
@@ -35,6 +37,7 @@ export function getName(type: string): string {
         'y': 'y坐标',
         'vx': 'x速度',
         'vy': 'y速度',
+        'charge': '电荷',
     }[type] || type;
 }
 
