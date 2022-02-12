@@ -1,72 +1,37 @@
 <template>
     <div class="shape" v-for="(shape, i) of shapeList">
         <canvas width="100" height="50" :id="`shape-${shape.id}-${shape.type}-${i}`" class="shape-canvas"></canvas>
-        <button :id="`button-${shape.id}`" class="button">编辑</button>
+        <button @click="$emit('editShape', i)" :id="`button-${shape.id}`" class="button">编辑</button>
     </div>
+    <button id="create">创建新形状</button>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Shape, shapeList } from "../experiment/utils";
+import { shapeList, drawShape, initCanvas } from "../experiment/utils";
 
-function center(shape: Shape) {
-    if (shape.type === 'circle') {
-        const radius = shape.radius;
-        const scale = 45 / (radius * 2);
-        return { radius: radius * scale }
-    } else {
-        const vertical = shape.node.map(v => v[1]);
-        const horizon = shape.node.map(v => v[0]);
-        const left = Math.min(...horizon);
-        const right = Math.max(...horizon);
-        const top = Math.min(...vertical);
-        const bottom = Math.max(...vertical);
-        const width = right - left;
-        const height = bottom - top;
-        const center = [left + width / 2, top + height / 2];
-        const scale = width > height * 2 ? 90 / width : 45 / height;
-        return shape.node.map(v => 
-            [(v[0] - center[0]) * scale + center[0], 
-            (v[1] - center[1]) * scale + center[1]]
-        );
-    }
-}
-
-export function drawThumbnail() {
+async function drawThumbnail() {
     const canvases = document.getElementsByClassName('shape-canvas') as HTMLCollectionOf<HTMLCanvasElement>;
     const arr = Array.from(canvases);
-    arr.forEach(v => {
+    arr.forEach(async (v) => {
+        initCanvas(v);
         const id = v.id;
         const splitted = id.split('-');
-        const type = splitted[2];
-        const ctx = v.getContext('2d') as CanvasRenderingContext2D;
-        ctx.strokeStyle = '#ccc';
-        ctx.lineWidth = 3;
-        ctx.fillStyle = '#6495ED';
-        const shape = shapeList[parseInt(splitted[3])];
-        if (type === 'circle') {
-            const info = center(shape);
-            ctx.beginPath();
-            // @ts-ignore
-            ctx.arc(50, 25, info.radius, 0, 2 * Math.PI);
-            ctx.stroke();
-            ctx.fill();
-        } else if (type === 'polygon') {
-            const info = center(shape);
-            ctx.beginPath();
-            ctx.moveTo(shape.node[0][0], shape.node[0][1]);
-            // @ts-ignore
-            for (let i = 1; i < info.length; i++) {
-                // @ts-ignore
-                ctx.lineTo(info[i][0], info[i][1]);
-            }
-            ctx.closePath();
-            ctx.stroke();
-        }
+        await drawShape(parseInt(splitted[3]), {
+            canvas: id,
+            node: false,
+            dx: 0,
+            dy: 0,
+            scale: 1,
+            strokeStyle: '#ccc',
+            width: 100,
+            height: 50
+        });
     });
 }
 
 export default defineComponent({
+    emits: ['editShape'],
     name: 'Shapes',
     data: () => {
         return {
@@ -75,6 +40,9 @@ export default defineComponent({
     },
     methods: {
         drawThumbnail,
+    },
+    async mounted() {
+        await drawThumbnail();
     }
 });
 
@@ -120,6 +88,29 @@ export default defineComponent({
 }
 
 .button:active {
+    border: 2px solid #222;
+}
+
+#create {
+    width: 94%;
+    height: 50px;
+    background: transparent;
+    border: 2px solid #222;
+    font-size: 26px;
+    color: #ffd;
+    cursor: pointer;
+    text-align: center;
+    font-weight: bold;
+    margin-left: 3%;
+    margin-right: 3%;
+    border-radius: 5px;
+}
+
+#create:hover {
+    border: 2px solid #555;
+}
+
+#create:active {
     border: 2px solid #222;
 }
 

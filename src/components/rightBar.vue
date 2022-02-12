@@ -1,12 +1,16 @@
 <template>
     <div id="right-bar" class="bar">
-        <ObjectsVue v-if="selected === 'objects'" v-for="obj of objectList" :_name="obj.name" :_type="obj.type" :_img="obj.img"></ObjectsVue>
-        <ShapesVue v-if="selected === 'shapes'"></ShapesVue>
+        <keep-alive>
+            <component :is="selected" @edit-shape="editShape"></component>
+        </keep-alive>
     </div>
-    <div id="fold" class="bar" @click="triggerFold()">{{folded ? '◀' : '▶'}}</div>
+    <div id="fold" class="bar" @click="triggerFold()">
+        <div id="fold-text">▶</div>
+    </div>
     <div id="list" class="bar">
-        <div @click="select(one.id)" v-for="one of selectList" class="select" v-bind:status="selected === one.id">{{one.text}}</div>
+        <div @click="select(one.id)" v-for="one of selectList" class="select" :status="selected === `${one.id}-vue`">{{one.text}}</div>
     </div>
+    <ShapeEditorVue v-if="editing" :index="editIndex" ></ShapeEditorVue>
 </template>
 
 <script lang="ts">
@@ -15,7 +19,7 @@ import ObjectsVue from "./object.vue";
 import { defineComponent } from "vue";
 import { shapeList } from "../experiment/utils";
 import ShapesVue from "./shapes.vue";
-import { drawThumbnail } from "./shapes.vue";
+import ShapeEditorVue from "./shapeEditor.vue";
 
 const objectList = Object.values(objects);
 
@@ -29,13 +33,20 @@ function initStyle(ele: HTMLElement): void {
     else ele.style.right = '0px';
 }
 
+export const editorStatus = {
+    index: 0,
+    showing: false
+}
+
 export default defineComponent({
     name: "RightBar",
     data: () => {
         return {
             objectList, shapeList, selectList,
             folded: false,
-            selected: 'objects'
+            selected: 'objects-vue',
+            editing: false,
+            editIndex: 0,
         };
     },
     methods: {
@@ -54,15 +65,20 @@ export default defineComponent({
                     bar.style.right = bar.id === 'list' ? `${now + 380}px` : `${now + 300}px`;
                 }
             });
+            const text = document.getElementById('fold-text') as HTMLDivElement;
+            text.style.transform = this.folded ? 'rotateY(0deg)' : 'rotateY(180deg)';            
             this.folded = !this.folded;
         },
         select(id: string) {
-            this.selected = id;
-            if (id === 'shapes') setTimeout(drawThumbnail, 100);
+            this.selected = `${id}-vue`;
+        },
+        editShape(index: number) {
+            this.editIndex = index;
+            this.editing = true;
         }
     },
     components: {
-        ObjectsVue, ShapesVue
+        ObjectsVue, ShapesVue, ShapeEditorVue
     }
 })
 </script>
@@ -87,12 +103,9 @@ export default defineComponent({
     position: absolute;
     top: 0px;
     right: 300px;
-    font-size: 30px;
-    color: white;
     width: 50px;
     height: 45px;
     box-shadow: 0px 0px 5px black, 5px 5px 5px black;
-    text-shadow: 3px 3px 5px black;
     background-color: rgba(100, 100, 100, 0.5);
     text-align: center;
     cursor: pointer;
@@ -137,6 +150,14 @@ export default defineComponent({
 
 .select[status="true"] {
     background-color: rgba(140, 140, 140, 0.8);
+}
+
+#fold-text {
+    font-size: 30px;
+    color: white;
+    text-shadow: 3px 3px 5px black;
+    transition: transform 0.5s linear;
+    -webkit-transition: transform 0.5s linear;
 }
 
 </style>

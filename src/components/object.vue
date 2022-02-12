@@ -1,13 +1,13 @@
 <template>
-    <div class="object">
+    <div v-for="obj of objectList" class="object">
         <div id="brief">
             <button id="detail" @click="triggerDetail()">{{detail ? '简略' : '详细'}}</button>
-            <img id="image" :src="`/source/${_img}`"/>
-            <span class="text">{{_name}}</span>
-            <button class="create" @click="create(configs)">创建</button>
+            <img id="image" :src="`/source/${obj.img}`"/>
+            <span class="text">{{obj.name}}</span>
+            <button class="create" @click="create(configs, obj.type)">创建</button>
         </div>
         <hr v-if="detail" />
-        <div v-if="detail" v-for="config in (obj[_type] || {}).config" class="detail">
+        <div v-if="detail" v-for="config in obj.config" class="detail">
             <span class="input-prompt">{{getName(config.split(':')[0])}}</span>
             <span id="input-box">
                 <input class="input" type="text" v-model.trim="configs[config.split(':')[0]]"/>
@@ -21,7 +21,7 @@
 
 import { addRoundObject } from "../experiment/utils";
 import { Obj, getName } from '../experiment/utils'
-import objects from '../resource/objects';
+import objectList from '../resource/objects';
 import { defineComponent } from "vue";
 
 interface Config {
@@ -47,29 +47,16 @@ const config: Config = {
 
 export default defineComponent({
     name: 'ObjectsVue',
-    props: {
-        _name: {
-            type: String,
-            required: true
-        },
-        _type: {
-            type: String,
-            required: true
-        },
-        _img: {
-            type: String,
-            required: true
-        }
-    },
+    props: {},
     data() {
         return {
             detail: false,
-            obj: objects,
+            objectList,
             getName, configs: config,
         }
     },
     methods: {
-        createConfig (config: Config): Obj<any> {
+        createConfig (config: Config, type: string): Obj<any> {
             const c: {[x: string]: any} = {}
             for (const key in config) {
                 const num = parseFloat(config[key]);
@@ -82,11 +69,11 @@ export default defineComponent({
             c.position = [c.x, c.y];
             c.velocity = [c.vx, c.vy];
             return {
-                type: this._type, config: c
+                type, config: c
             }
         },
-        create(config: Config) {
-            const obj = this.createConfig(config);
+        create(config: Config, type: string) {
+            const obj = this.createConfig(config, type);
             return addRoundObject(obj);
         },
         triggerDetail() {

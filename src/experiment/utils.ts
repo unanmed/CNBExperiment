@@ -12,7 +12,31 @@ export interface Obj<K extends keyof ObjectDict> {
     config: ObjectDict[K];
 }
 
-export const shapeList: Shape[] = [new Shape('circle', [100, 100], 100)];
+export interface DrawConfig {
+    scale: number
+    dx: number
+    dy: number
+    fillStyle?: string
+    strokeStyle?: string
+    node?: boolean
+    canvas: string
+    hover?: number
+    width: number
+    height: number
+}
+
+export interface ComputeConfig {
+    dx: number
+    dy: number
+    scale: number
+    width: number
+    height: number
+}
+
+export const shapeList: Shape[] = [
+    new Shape('circle', [100, 100], 100),
+    new Shape('polygon', [0, 0], [[0, 0], [0, 100], [100, 100], [100, 0]]),
+];
 
 /** 添加一个圆形物体 */
 export function addRoundObject(config: Obj<'ball'>): RoundObject {
@@ -41,4 +65,99 @@ export function getName(type: string): string {
     }[type] || type;
 }
 
-export { Shape }
+/** 居中圆形 */
+export function centerCircle(shape: Shape, w: number, h: number) {
+    const radius = shape.radius;
+    const scale = (Math.min(w, h) - 10) / (radius * 2);
+    return { radius: radius * scale }
+}
+
+/** 居中多边形 */
+export function centerPolygon(shape: Shape, w: number, h: number) {
+    const aspect = w / h;
+    const vertical = shape.node.map(v => v[1]);
+    const horizon = shape.node.map(v => v[0]);
+    const left = Math.min(...horizon);
+    const right = Math.max(...horizon);
+    const top = Math.min(...vertical);
+    const bottom = Math.max(...vertical);
+    const width = right - left;
+    const height = bottom - top;
+    const center = [left + width / 2, top + height / 2];
+    const scale = width > height * aspect ? (w - 10) / width : (h - 10) / height;
+    return shape.node.map(v =>
+        [(v[0] - center[0]) * scale + w / 2,
+        (v[1] - center[1]) * scale + h / 2]
+    );
+}
+
+/** 获得计算后的多边形节点坐标 */
+export function getComputedNode(index: number, config: ComputeConfig): Array<[number, number]> {
+    return centerPolygon(shapeList[index], config.width, config.height).map(v =>
+        [v[0] * config.scale + config.dx, v[1] * config.scale + config.dy]
+    );
+}
+
+/** 获得形状的类型的中文名 */
+export function getShapeTypeName(type: string): string {
+    return {
+        circle: '圆形',
+        polygon: '多边形',
+    }[type] || '未知';
+}
+
+/** 生成图形节点 */
+export function generateNode(index: number) {
+    const shape = shapeList[index];
+    return shape.type === 'circle' ?
+        [shape.center[0], shape.center[1]] :
+        shapeList[index].node.slice();
+}
+
+/** 初始化画布 */
+export function initCanvas(canvas: HTMLCanvasElement) {
+    const style = getComputedStyle(canvas);
+    canvas.width = parseInt(style.width);
+    canvas.height = parseInt(style.height);
+}
+
+/** 绘制图形 */
+export async function drawShape(index: number, config: DrawConfig): Promise<void> {
+    const shape = shapeList[index];
+    const canvas = document.getElementById(config.canvas) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    const { dx, dy, width, height, scale } = config;
+    ctx.clearRect(0, 0, width, height);
+    ctx.strokeStyle = config.strokeStyle || '#222';
+    ctx.lineWidth = 3;
+    ctx.fillStyle = config.fillStyle || '#6495ED';
+    ctx.beginPath();
+    if (shape.type === 'circle') { // 圆形
+        const info = centerCircle(shape, width, height);
+        ctx.arc(width / 2 * scale + dx, height / 2 * scale + dy, info.radius * scale, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.fill();
+        if (config.node) {
+            if (config.hover === 0) ctx.fillStyle = '#777';
+            else ctx.fillStyle = 'black';
+            ctx.fillRect(width / 2 * scale + dx - 5, height / 2 * scale + dy - 5, 10, 10);
+        }
+    } else { // 多边形
+        const info = centerPolygon(shape, width, height);
+        ctx.moveTo(info[0][0] * scale + dx, info[0][1] * scale + dy);
+        for (const [x, y] of info) {
+            ctx.lineTo(x * scale + dx, y * scale + dy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fill();
+        if (config.node) {
+            info.forEach((v, i) => {
+                if (i === info.length - 1 && config.hover === 0) return;
+                if (config.hover === i) ctx.fillStyle = '#777';
+                else ctx.fillStyle = 'black';
+                ctx.fillRect(v[0] * scale + dx - 5, v[1] * scale + dy - 5, 10, 10);
+            });
+        }
+    }
+}
