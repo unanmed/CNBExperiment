@@ -10,7 +10,11 @@
             <div id="editor">
                 <img class="scale" @click="triggerScale('lessen')" id="lessen" src="/src/assets/lessen.png">
                 <img class="scale" @click="triggerScale('enlarge')" id="enlarge" src="/src/assets/enlarge.png">
-                <canvas @mousemove="listenMove($event, index)" id="editor-canvas"></canvas>
+                <canvas @mouseup="listenUp($event, index)" 
+                    @mousedown="listenDown($event, index)"
+                    @mousemove="listenMove($event, index)" 
+                    id="editor-canvas">
+                </canvas>
             </div>
             <hr id="bottom">
             <div id="tools">
@@ -22,8 +26,8 @@
                     <button class="tool" id="detail">详细信息</button>
                 </div>
                 <div id="rightTool">
-                    <button class="tool">取消</button>
-                    <button class="tool">确定</button>
+                    <button class="tool" @click="cancel(index)">取消</button>
+                    <button class="tool" @click="$emit('confirm')">确定</button>
                 </div>
             </div>
         </div>
@@ -32,9 +36,10 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { shapeList, getShapeTypeName, drawShape, centerPolygon, getComputedNode, initCanvas } from "../experiment/utils";
+import { shapeList, getShapeTypeName, drawShape, changeNode,
+    getComputedNode, initCanvas, DrawConfig } from "../experiment/utils";
 
-type node = {
+export type node = {
     radius?: number, 
     center?: [number, number], 
     node?: Array<[number, number]>
@@ -46,9 +51,12 @@ const tempNode: node = {};
 
 const saveList = [];
 
-let last: 'selected' | 'unselected' = 'unselected';
+let selected: number = -1;
+
+let clicked: boolean = false;
 
 export default defineComponent({
+    emits: ['confirm', 'cancel'],
     name: 'ShapeEditor',
     props: {
         index: {
@@ -63,13 +71,31 @@ export default defineComponent({
             dx: 0,
             dy: 0,
             width: 0,
-            height: 0
+            height: 0,
         };
     },
     methods: {
         getShapeTypeName,
         listenMove(ev: MouseEvent, index: number) {
             const shape = shapeList[index];
+            const config: DrawConfig = {
+                canvas: 'editor-canvas',
+                node: true,
+                dx: this.dx,
+                dy: this.dy,
+                scale: this.scale,
+                width: this.width,
+                height: this.height,
+            }
+            if (clicked) {
+                if (shape.type === 'circle') {
+                    return;
+                } else {
+                    changeNode(shape, selected, ev.movementX, ev.movementY, config);
+                    drawShape(index, config);
+                    return;
+                }
+            }
             const nodes: Array<[number, number]> = [];
             if (shape.type === 'circle') {
                 nodes.push([shape.center[0] + this.dx, shape.center[1] + this.dy]);
@@ -82,35 +108,19 @@ export default defineComponent({
                     height: this.height
                 }));
             }
-            const hover = nodes.findIndex(([x, y]) => {
+            const hover = nodes.findIndex(([x, y], i) => {
                 return Math.abs(ev.offsetX - x) <= 10 && Math.abs(ev.offsetY - y) <= 10;
             });
+            config.hover = hover;
             if (hover === -1){ 
-                if (last === 'selected') {
-                    last = 'unselected';
-                    drawShape(index, {
-                        canvas: 'editor-canvas',
-                        node: true,
-                        dx: this.dx,
-                        dy: this.dy,
-                        scale: this.scale,
-                        width: this.width,
-                        height: this.height
-                    });
+                if (selected >= 0) {
+                    selected = -1;
+                    drawShape(index, config);
                 }
                 return;
             }
-            last = 'selected';            
-            drawShape(index, {
-                canvas: 'editor-canvas',
-                node: true,
-                dx: this.dx,
-                dy: this.dy,
-                scale: this.scale,
-                hover,
-                width: this.width,
-                height: this.height
-            })
+            selected = hover;            
+            drawShape(index, config);
         },
         triggerScale(type: 'enlarge' | 'lessen') {
             if (type === "enlarge") {
@@ -118,7 +128,16 @@ export default defineComponent({
             } else {
                 this.scale /= 1.1;
             }
-        }
+        },
+        listenDown(ev: MouseEvent, index: number) {
+            if (selected !== -1) clicked = true;
+        },
+        listenUp(ev: MouseEvent, index: number) {
+            clicked = false;
+        },
+        cancel(index: number) {
+            this.$emit('cancel', originNode, shapeList[index]);
+        },
     },
     async mounted() {
         const canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
@@ -142,7 +161,7 @@ export default defineComponent({
             originNode.center = shape.center.slice() as [number, number];
         } else {
             tempNode.node = shape.node.slice();
-            originNode.node = shape.node.slice();
+            originNode.node = shape.node.slice() as Array<[number, number]>;
         }
     },
     watch: {

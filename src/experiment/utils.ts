@@ -12,23 +12,22 @@ export interface Obj<K extends keyof ObjectDict> {
     config: ObjectDict[K];
 }
 
-export interface DrawConfig {
+export interface BaseConfig {
     scale: number
     dx: number
     dy: number
+}
+
+export interface DrawConfig extends ComputeConfig {
     fillStyle?: string
     strokeStyle?: string
     node?: boolean
     canvas: string
     hover?: number
-    width: number
-    height: number
+    noCache?: boolean
 }
 
-export interface ComputeConfig {
-    dx: number
-    dy: number
-    scale: number
+export interface ComputeConfig extends BaseConfig {
     width: number
     height: number
 }
@@ -37,6 +36,8 @@ export const shapeList: Shape[] = [
     new Shape('circle', [100, 100], 100),
     new Shape('polygon', [0, 0], [[0, 0], [0, 100], [100, 100], [100, 0]]),
 ];
+
+const scaleCache = new Map<Shape, { scale: number, center: [number, number] }>();
 
 /** 添加一个圆形物体 */
 export function addRoundObject(config: Obj<'ball'>): RoundObject {
@@ -73,7 +74,30 @@ export function centerCircle(shape: Shape, w: number, h: number) {
 }
 
 /** 居中多边形 */
-export function centerPolygon(shape: Shape, w: number, h: number) {
+export function centerPolygon(shape: Shape, w: number, h: number, noCache?: boolean) {
+    let scale = scaleCache.get(shape) as { scale: number, center: number[] };
+    const res = getScale(shape, w, h) as { scale: number, center: [number, number] };
+    if (!scale) {
+        const t = { scale: res.scale, center: res.center }
+        if (!noCache) {
+            scaleCache.set(shape, t);
+            scale = t;
+        }
+    }
+    if (noCache) {
+        return shape.node.map(v =>
+            [(v[0] - res.center[0]) * res.scale + w / 2,
+            (v[1] - res.center[1]) * res.scale + h / 2]
+        );
+    }
+    else return shape.node.map(v =>
+        [(v[0] - scale.center[0]) * scale.scale + w / 2,
+        (v[1] - scale.center[1]) * scale.scale + h / 2]
+    );
+}
+
+/** 获得图形相比于原图的比例 */
+export function getScale(shape: Shape, w: number, h: number) {
     const aspect = w / h;
     const vertical = shape.node.map(v => v[1]);
     const horizon = shape.node.map(v => v[0]);
@@ -85,10 +109,7 @@ export function centerPolygon(shape: Shape, w: number, h: number) {
     const height = bottom - top;
     const center = [left + width / 2, top + height / 2];
     const scale = width > height * aspect ? (w - 10) / width : (h - 10) / height;
-    return shape.node.map(v =>
-        [(v[0] - center[0]) * scale + w / 2,
-        (v[1] - center[1]) * scale + h / 2]
-    );
+    return { center, scale };
 }
 
 /** 获得计算后的多边形节点坐标 */
@@ -129,35 +150,49 @@ export async function drawShape(index: number, config: DrawConfig): Promise<void
     const { dx, dy, width, height, scale } = config;
     ctx.clearRect(0, 0, width, height);
     ctx.strokeStyle = config.strokeStyle || '#222';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.fillStyle = config.fillStyle || '#6495ED';
     ctx.beginPath();
     if (shape.type === 'circle') { // 圆形
         const info = centerCircle(shape, width, height);
         ctx.arc(width / 2 * scale + dx, height / 2 * scale + dy, info.radius * scale, 0, 2 * Math.PI);
-        ctx.stroke();
         ctx.fill();
+        ctx.stroke();
         if (config.node) {
             if (config.hover === 0) ctx.fillStyle = '#777';
             else ctx.fillStyle = 'black';
             ctx.fillRect(width / 2 * scale + dx - 5, height / 2 * scale + dy - 5, 10, 10);
         }
     } else { // 多边形
-        const info = centerPolygon(shape, width, height);
+        const info = centerPolygon(shape, width, height, config.noCache);
         ctx.moveTo(info[0][0] * scale + dx, info[0][1] * scale + dy);
         for (const [x, y] of info) {
             ctx.lineTo(x * scale + dx, y * scale + dy);
         }
         ctx.closePath();
-        ctx.stroke();
         ctx.fill();
+        ctx.stroke();
         if (config.node) {
             info.forEach((v, i) => {
-                if (i === info.length - 1 && config.hover === 0) return;
                 if (config.hover === i) ctx.fillStyle = '#777';
                 else ctx.fillStyle = 'black';
                 ctx.fillRect(v[0] * scale + dx - 5, v[1] * scale + dy - 5, 10, 10);
             });
         }
+    }
+}
+
+/** 修改图形的节点 */
+export function changeNode(shape: Shape, index: number, dx: number, dy: number, config: ComputeConfig) {
+    // 解析出鼠标位置对应的图形位置
+    const res = scaleCache.get(shape) as { scale: number, center: [number, number] };
+    const [nx, ny] = shape.node[index];
+    const { scale } = config;
+    const [tx, ty] = [nx + dx / scale / res.scale, ny + dy / scale / res.scale];
+    // 修改
+    if (shape.type === 'circle') {
+
+    } else {
+        shape.node[index] = [tx, ty];
     }
 }

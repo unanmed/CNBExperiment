@@ -10,7 +10,7 @@
     <div id="list" class="bar">
         <div @click="select(one.id)" v-for="one of selectList" class="select" :status="selected === `${one.id}-vue`">{{one.text}}</div>
     </div>
-    <ShapeEditorVue v-if="editing" :index="editIndex" ></ShapeEditorVue>
+    <ShapeEditorVue @confirm="confirmEdit" @cancel="cancelEdit" v-if="editing" :index="editIndex" ></ShapeEditorVue>
 </template>
 
 <script lang="ts">
@@ -18,8 +18,9 @@ import objects from "../resource/objects";
 import ObjectsVue from "./object.vue";
 import { defineComponent } from "vue";
 import { shapeList } from "../experiment/utils";
-import ShapesVue from "./shapes.vue";
-import ShapeEditorVue from "./shapeEditor.vue";
+import ShapesVue, {drawThumbnail} from "./shapes.vue";
+import ShapeEditorVue, { node } from "./shapeEditor.vue";
+import { Shape } from "../../type/lib/shape/shape";
 
 const objectList = Object.values(objects);
 
@@ -75,6 +76,21 @@ export default defineComponent({
         editShape(index: number) {
             this.editIndex = index;
             this.editing = true;
+        },
+        async confirmEdit() {
+            this.editing = false;
+            await drawThumbnail();
+        },
+        cancelEdit(node: node, shape: Shape) {
+            console.log(node);
+            
+            this.editing = false;
+            if (shape.type === 'circle' && node.radius && node.center) {
+                shape.radius = node.radius;
+                shape.center = node.center.slice() as [number, number];
+            } else {
+                if (node.node) shape.node = node.node;
+            }
         }
     },
     components: {
@@ -82,7 +98,7 @@ export default defineComponent({
     }
 })
 </script>
-
+h
 <style lang="less" scoped>
 
 #right-bar {

@@ -10,7 +10,7 @@
 import { defineComponent } from "vue";
 import { shapeList, drawShape, initCanvas } from "../experiment/utils";
 
-async function drawThumbnail() {
+export async function drawThumbnail() {
     const canvases = document.getElementsByClassName('shape-canvas') as HTMLCollectionOf<HTMLCanvasElement>;
     const arr = Array.from(canvases);
     arr.forEach(async (v) => {
@@ -25,7 +25,8 @@ async function drawThumbnail() {
             scale: 1,
             strokeStyle: '#ccc',
             width: 100,
-            height: 50
+            height: 50,
+            noCache: true
         });
     });
 }
