@@ -81,14 +81,14 @@ export function drawAllObjects(): void {
 const fieldCache: { [key: string]: Array<Arrow> } = {};
 
 /** 绘制所有场，重力场除外 */
-export function drawAllFields(): void {
+export function drawAllFields(noCache: boolean = false): void {
     const fieldsCtx = Draw.contexts.fields;
     if (!(fieldsCtx instanceof CanvasRenderingContext2D)) return;
     const arr = Object.values(Draw.fieldList);
     fieldsCtx.clearRect(0, 0, parseFloat(Draw.canvases.fields.style.width || '0'),
         parseFloat(Draw.canvases.fields.style.height || '0'))
     for (const field of arr) {
-        if (field instanceof ScopedField) drawField(field);
+        if (field instanceof ScopedField) drawField(field, noCache);
     }
 }
 
@@ -257,13 +257,13 @@ function intersectCircle(center: [number, number], radius: number, arrow: Arrow)
 }
 
 /** 绘制电场的箭头 */
-function drawElectricArrow(field: UniformElectricField) {
+function drawElectricArrow(field: UniformElectricField, noCache: boolean = false) {
     const fieldsCtx = Draw.contexts.fields;
     if (!(fieldsCtx instanceof CanvasRenderingContext2D)) return;
     const arr = getElectricArrowPoints(field);
     const [px, py] = field.position
     let info;
-    if (!fieldCache[field.id]) {
+    if (!fieldCache[field.id] || noCache) {
         let cache: Array<Arrow> = [];
         // 判断与边界的交点，仍然将圆形与多边形分开
         if (field.shape.type === 'circle') {
@@ -310,7 +310,7 @@ function drawElectricArrow(field: UniformElectricField) {
 }
 
 /** 绘制一个匀强电场|磁场 */
-export function drawField<K extends keyof FieldList>(field: ScopedField<K>): void {
+export function drawField<K extends keyof FieldList>(field: ScopedField<K>, noCache: boolean = false): void {
     drawFieldBack(field);
-    if (field instanceof UniformElectricField) drawElectricArrow(field);
+    if (field instanceof UniformElectricField) drawElectricArrow(field, noCache);
 }

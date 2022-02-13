@@ -91,7 +91,7 @@ export default defineComponent({
         async confirmEdit() {
             this.editing = false;
             await drawThumbnail();
-            drawAllFields();
+            drawAllFields(true);
         },
         cancelEdit(node: node, shape: Shape) {            
             this.editing = false;
