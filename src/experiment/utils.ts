@@ -3,6 +3,7 @@ import { drawAllFields, drawAllObjects } from "./draw";
 
 export interface ObjectDict {
     ball: RoundObject
+    electricField: UniformElectricField
 }
 
 export interface Obj<K extends keyof ObjectDict> {
@@ -46,13 +47,6 @@ export function addRoundObject(config: Obj<'ball'>): RoundObject {
     return obj;
 }
 
-/** 添加一个匀强电场 */
-export function addUniformElectricField(name: string, magnitude: [number, number], shape: Shape): UniformElectricField {
-    const field = new UniformElectricField(name, magnitude, shape);
-    drawAllFields();
-    return field;
-}
-
 /** 根据英文名获取中文名 */
 export function getName(type: string): string {
     return {
@@ -63,6 +57,10 @@ export function getName(type: string): string {
         'vx': 'x速度',
         'vy': 'y速度',
         'charge': '电荷',
+        'electricMagnitudeX': 'x场强',
+        'electricMagnitudeY': 'y场强',
+        'scale': '缩放',
+        'shape': '形状',
     }[type] || type;
 }
 
@@ -195,4 +193,11 @@ export function changeNode(shape: Shape, index: number, dx: number, dy: number, 
     } else {
         shape.node[index] = [tx, ty];
     }
+}
+
+/** 添加电场 */
+export function addElectricField(config: Obj<'electricField'>) {
+    const field = new UniformElectricField('electric',
+        config.config.magnitude, config.config.shape, config.config.position);
+    drawAllFields();
 }

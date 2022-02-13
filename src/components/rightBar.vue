@@ -1,7 +1,7 @@
 <template>
     <div id="right-bar" class="bar">
         <keep-alive>
-            <component :is="selected" @edit-shape="editShape"></component>
+            <component :is="selected" @edit-shape="editShape" @choose="openSelectShape"></component>
         </keep-alive>
     </div>
     <div id="fold" class="bar" @click="triggerFold()">
@@ -11,6 +11,7 @@
         <div @click="select(one.id)" v-for="one of selectList" class="select" :status="selected === `${one.id}-vue`">{{one.text}}</div>
     </div>
     <ShapeEditorVue @confirm="confirmEdit" @cancel="cancelEdit" v-if="editing" :index="editIndex" ></ShapeEditorVue>
+    <ShapeSelectorVue @cancel="selecting = false" @select="selectShape" v-if="selecting" :index="beSelectedIndex"></ShapeSelectorVue>
 </template>
 
 <script lang="ts">
@@ -21,6 +22,9 @@ import { shapeList } from "../experiment/utils";
 import ShapesVue, {drawThumbnail} from "./shapes.vue";
 import ShapeEditorVue, { node } from "./shapeEditor.vue";
 import { Shape } from "../../type/lib/shape/shape";
+import ShapeSelectorVue from "./selectShape.vue";
+import { drawAllFields } from "../experiment/draw";
+import { shape } from "./oneObject.vue";
 
 const objectList = Object.values(objects);
 
@@ -48,6 +52,13 @@ export default defineComponent({
             selected: 'objects-vue',
             editing: false,
             editIndex: 0,
+            selecting: false,
+            beSelectedIndex: 'electricField',
+        };
+    },
+    provide() {
+        return {
+            shapeSelect: 0
         };
     },
     methods: {
@@ -80,10 +91,9 @@ export default defineComponent({
         async confirmEdit() {
             this.editing = false;
             await drawThumbnail();
+            drawAllFields();
         },
-        cancelEdit(node: node, shape: Shape) {
-            console.log(node);
-            
+        cancelEdit(node: node, shape: Shape) {            
             this.editing = false;
             if (shape.type === 'circle' && node.radius && node.center) {
                 shape.radius = node.radius;
@@ -91,14 +101,23 @@ export default defineComponent({
             } else {
                 if (node.node) shape.node = node.node;
             }
+        },
+        selectShape(index: number, objIndex: string) {
+            shape[objIndex] = index;            
+        },
+        openSelectShape(index: string) {            
+            this.beSelectedIndex = index;
+            requestAnimationFrame(() => {
+                this.selecting = true;
+            });
         }
     },
     components: {
-        ObjectsVue, ShapesVue, ShapeEditorVue
-    }
+        ObjectsVue, ShapesVue, ShapeEditorVue, ShapeSelectorVue
+    },
 })
 </script>
-h
+
 <style lang="less" scoped>
 
 #right-bar {
@@ -162,10 +181,16 @@ h
     cursor: pointer;
     z-index: 200;
     border: 1px solid black;
+    transition: all 0.2s ease-out;
+    -webkit-transition: all 0.2s ease-out;
 }
 
 .select[status="true"] {
-    background-color: rgba(140, 140, 140, 0.8);
+    background-color: rgba(160, 160, 160, 0.8);
+}
+
+.select:hover[status='false'] {
+    background-color: rgba(130, 130, 130, 0.8);
 }
 
 #fold-text {

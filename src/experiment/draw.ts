@@ -99,14 +99,15 @@ function drawFieldBack<K extends keyof FieldList>(field: ScopedField<K>) {
     fieldsCtx.fillStyle = 'rgba(100, 100, 255, 0.3)';
     fieldsCtx.strokeStyle = 'rgba(68, 219, 255, 0.7)';
     fieldsCtx.lineWidth = 2;
+    const [px, py] = field.position;
     if (field.shape.type === 'circle') {
         const [x, y] = field.shape.center;
-        fieldsCtx.arc(x, y, field.shape.radius, 0, Math.PI * 2);
+        fieldsCtx.arc(x + px, y + py, field.shape.radius, 0, Math.PI * 2);
     } else if (field.shape.type === 'polygon') {
         fieldsCtx.beginPath();
-        fieldsCtx.moveTo(field.shape.node[0][0], field.shape.node[0][1]);
+        fieldsCtx.moveTo(field.shape.node[0][0] + px, field.shape.node[0][1] + py);
         for (const [x, y] of field.shape.node) {
-            fieldsCtx.lineTo(x, y);
+            fieldsCtx.lineTo(x + px, y + py);
         }
         fieldsCtx.closePath();
     }
@@ -189,10 +190,9 @@ function intersectPolygon(node: Array<[number, number]>, arrow: Arrow): Arrow[] 
     const [x3, y3] = [arrow.x1, arrow.y1];
     const [x4, y4] = [arrow.x2, arrow.y2];
     node.forEach((v, i) => {
-        if (i === node.length - 1) return;
         // 判断是否有交点
         const [x1, y1] = v;
-        const [x2, y2] = node[i + 1];
+        const [x2, y2] = node[i === node.length - 1 ? 0 : i + 1];
         if ((x1 === x3 && x2 === x4 && y1 === y3 && y2 === y4) ||
             (x1 === x4 && x2 === x3 && y1 === y4 && y2 === y3)) return;
         // 如果箭头两端在线段上，则也算是交点
@@ -211,8 +211,6 @@ function intersectPolygon(node: Array<[number, number]>, arrow: Arrow): Arrow[] 
         intersection.push([x, y]);
     });
     // 有序化
-    if (intersection.some(v => v[0] === 300 && v[1] === 300))
-        console.log(intersection);
     const sign = Math.sign(arrow.x1 - arrow.x2)
     intersection.sort((a, b) => sign * (b[0] - a[0]));
     // 相邻去重
@@ -263,6 +261,7 @@ function drawElectricArrow(field: UniformElectricField) {
     const fieldsCtx = Draw.contexts.fields;
     if (!(fieldsCtx instanceof CanvasRenderingContext2D)) return;
     const arr = getElectricArrowPoints(field);
+    const [px, py] = field.position
     let info;
     if (!fieldCache[field.id]) {
         let cache: Array<Arrow> = [];
@@ -294,17 +293,17 @@ function drawElectricArrow(field: UniformElectricField) {
     fieldsCtx.lineWidth = 1;
     fieldsCtx.beginPath();
     for (const { x1, x2, y1, y2 } of info) {
-        fieldsCtx.moveTo(x1, y1);
-        fieldsCtx.lineTo(x2, y2);
+        fieldsCtx.moveTo(x1 + px, y1 + py);
+        fieldsCtx.lineTo(x2 + px, y2 + py);
         // 绘制箭头的头部
         const sqrt2 = Math.SQRT1_2;
         const [x0, y0] = [(x2 - x1) * sqrt2, (y2 - y1) * sqrt2];
         const [x3, y3] = [x2 - (x0 - y0) * sqrt2 / 15, y2 - (x0 + y0) * sqrt2 / 15];
         const [x4, y4] = [x2 - (x0 + y0) * sqrt2 / 15, y2 + (x0 - y0) * sqrt2 / 15];
-        fieldsCtx.moveTo(x2, y2);
-        fieldsCtx.lineTo(x3, y3);
-        fieldsCtx.moveTo(x2, y2);
-        fieldsCtx.lineTo(x4, y4);
+        fieldsCtx.moveTo(x2 + px, y2 + py);
+        fieldsCtx.lineTo(x3 + px, y3 + py);
+        fieldsCtx.moveTo(x2 + px, y2 + py);
+        fieldsCtx.lineTo(x4 + px, y4 + py);
     }
     fieldsCtx.closePath();
     fieldsCtx.stroke();
