@@ -25,6 +25,7 @@ import { Shape } from "../../type/lib/shape/shape";
 import ShapeSelectorVue from "./selectShape.vue";
 import { drawAllFields } from "../experiment/draw";
 import { shape } from "./oneObject.vue";
+import { editScale } from "../experiment/global";
 
 const objectList = Object.values(objects);
 
@@ -93,7 +94,7 @@ export default defineComponent({
             await drawThumbnail();
             drawAllFields(true);
         },
-        cancelEdit(node: node, shape: Shape) {            
+        cancelEdit(node: node, shape: Shape, scale: number) {            
             this.editing = false;
             if (shape.type === 'circle' && node.radius && node.center) {
                 shape.radius = node.radius;
@@ -101,6 +102,7 @@ export default defineComponent({
             } else {
                 if (node.node) shape.node = node.node;
             }
+            editScale.set(shape, scale);
         },
         selectShape(index: number, objIndex: string) {
             shape[objIndex] = index;            

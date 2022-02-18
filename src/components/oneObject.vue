@@ -145,7 +145,8 @@ export default defineComponent({
                     scale: 1,
                     width: canvas.width,
                     height: canvas.height,
-                    strokeStyle: '#ddd'
+                    strokeStyle: '#ddd',
+                    noCache: true,
                 });
                 return true;
             }

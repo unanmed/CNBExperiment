@@ -201,3 +201,51 @@ export function addElectricField(config: Obj<'electricField'>) {
         config.config.magnitude, config.config.shape, config.config.position);
     drawAllFields();
 }
+
+/** 绘制比例尺 */
+export function drawScale(shape: Shape, config: DrawConfig) {
+    const dict = {
+        '1000': 'km',
+        '1': 'm',
+    }
+    let unit = 'm';
+    const nums = [1, 10, 100, 500, 1000];
+    const canvas = document.getElementById(config.canvas) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    const scale = getScale(shape, config.width, config.height).scale;
+    const right = config.width - 20;
+    const bottom = config.height - 20;
+    const length = 100 / scale / config.scale;
+    let drawLength = 0;
+    let ruler = 100;
+    if (length > 10000) unit = 'km';
+    for (let i = 4; i >= 0; i--) {
+        if (unit === 'm') {
+            if (length * 100 / nums[i] > 50 || i === 0) {
+                ruler = nums[i];
+                drawLength = ruler * 100 / length;
+                break;
+            }
+        } else {
+            if (length * 100 / nums[i] > 50000) {
+                ruler = nums[i];
+                drawLength = ruler * 100000 / length;
+                break;
+            }
+        }
+    }
+    ctx.strokeStyle = '#222';
+    ctx.beginPath();
+    ctx.moveTo(right, bottom - 10);
+    ctx.lineTo(right, bottom);
+    ctx.lineTo(right - drawLength, bottom);
+    ctx.lineTo(right - drawLength, bottom - 10);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#222';
+    ctx.font = '16px 20 Arial';
+    ctx.fillText(`${ruler}${unit}`, right - drawLength / 2, bottom - 10);
+    console.log(ruler);
+
+}
