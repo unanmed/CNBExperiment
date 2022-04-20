@@ -1,4 +1,4 @@
-import { Field, GeneralObject } from "..";
+import { Field, GeneralObject } from "cnb-physics";
 
 interface Target {
     electricField: Field<'electric'>[]
