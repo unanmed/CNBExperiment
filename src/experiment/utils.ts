@@ -39,6 +39,7 @@ export const shapeList: Shape[] = [
 ];
 
 const scaleCache = new Map<Shape, { scale: number, center: [number, number] }>();
+const rulerScale = new Map<Shape, number>();
 
 /** 添加一个圆形物体 */
 export function addRoundObject(config: Obj<'ball'>): RoundObject {
@@ -200,22 +201,23 @@ export function addElectricField(config: Obj<'electricField'>) {
     const field = new UniformElectricField('electric',
         config.config.magnitude, config.config.shape, config.config.position);
     drawAllFields();
+    return field;
 }
 
 /** 绘制比例尺 */
 export function drawScale(shape: Shape, config: DrawConfig) {
-    const dict = {
-        '1000': 'km',
-        '1': 'm',
-    }
     let unit = 'm';
+    let scale = rulerScale.get(shape);
+    if (!scale) {
+        scale = getScale(shape, config.width, config.height).scale;
+        rulerScale.set(shape, scale);
+    }
     const nums = [1, 10, 100, 500, 1000];
     const canvas = document.getElementById(config.canvas) as HTMLCanvasElement;
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-    const scale = getScale(shape, config.width, config.height).scale;
     const right = config.width - 20;
     const bottom = config.height - 20;
-    const length = 100 / scale / config.scale;
+    const length = 100 / config.scale / scale;
     let drawLength = 0;
     let ruler = 100;
     if (length > 10000) unit = 'km';
@@ -246,6 +248,4 @@ export function drawScale(shape: Shape, config: DrawConfig) {
     ctx.fillStyle = '#222';
     ctx.font = '16px 20 Arial';
     ctx.fillText(`${ruler}${unit}`, right - drawLength / 2, bottom - 10);
-    console.log(ruler);
-
 }

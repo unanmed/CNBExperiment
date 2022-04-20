@@ -64,7 +64,7 @@ export default defineComponent({
 <style lang="less" scoped>
 
 #left-bar {
-    background-color: #666;
+    background-color: rgba(102, 102, 102, 0.6);
     stroke: none;
     border-radius: 10px;
     position: absolute;
@@ -84,6 +84,7 @@ export default defineComponent({
     font-size: 0;
     height: 48px;
     margin-right: 6px;
+    opacity: 0.6;
 }
 
 .settings {

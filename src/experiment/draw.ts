@@ -1,6 +1,7 @@
 import { app } from "./main";
 import { Field, FieldList, getFieldList, RoundObject, ScopedField, UniformElectricField } from "..";
 import { getObjectList } from "..";
+import { resize } from './global';
 
 type Arrow = { x1: number, x2: number, y1: number, y2: number };
 
