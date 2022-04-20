@@ -21,7 +21,7 @@ import { defineComponent } from "vue";
 import { shapeList } from "../experiment/utils";
 import ShapesVue, {drawThumbnail} from "./shapes.vue";
 import ShapeEditorVue, { node } from "./shapeEditor.vue";
-import { Shape } from "../../type/lib/shape/shape";
+import type { Shape } from "cnb-physics";
 import ShapeSelectorVue from "./selectShape.vue";
 import { drawAllFields } from "../experiment/draw";
 import { shape } from "./oneObject.vue";

@@ -1,4 +1,4 @@
-import { Shape } from "..";
+import { Shape } from "cnb-physics";
 
 const objects: { [x: string]: { type: string, name: string, img: string, config: Array<string>, shape?: Shape } } = {
     'ball': {

@@ -1,4 +1,4 @@
-import { App } from '../index.js';
+import { App } from 'cnb-physics';
 
 export const app = new App({
     refreshRate: 10
