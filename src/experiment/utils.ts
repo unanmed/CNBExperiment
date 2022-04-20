@@ -1,4 +1,4 @@
-import { RoundObject, Shape, UniformElectricField } from "..";
+import { RoundObject, Shape, UniformElectricField } from "cnb-physics";
 import { drawAllFields, drawAllObjects } from "./draw";
 
 export interface ObjectDict {

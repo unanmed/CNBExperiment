@@ -1,4 +1,4 @@
-import { Shape } from "..";
+import { Shape } from "cnb-physics";
 import * as draw from './draw';
 
 /** 编辑图形时的每个图形的缩放比例 */
